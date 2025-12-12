@@ -1,4 +1,4 @@
-import 'package:floating_navigation_bar/nav_item.dart';
+import 'package:custom_floating_navigation_bar/nav_item.dart';
 import 'package:flutter/material.dart';
 
 class FloatingNavigationBar extends StatelessWidget {
