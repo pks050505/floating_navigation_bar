@@ -58,9 +58,8 @@ class CustomFloatingNavigationBar extends StatelessWidget {
                 return const Expanded(child: SizedBox());
               }
 
-              final itemIndex = slotIndex < middleSlotIndex
-                  ? slotIndex
-                  : slotIndex - 1;
+              final itemIndex =
+                  slotIndex < middleSlotIndex ? slotIndex : slotIndex - 1;
 
               final item = items[itemIndex];
               final bool isSelected = currentIndex == item.index;
@@ -72,13 +71,7 @@ class CustomFloatingNavigationBar extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        isSelected ? item.filledIcon : item.outlineIcon,
-                        color: isSelected
-                            ? const Color(0xff3A3333)
-                            : const Color(0xff484C52),
-                        size: isSelected ? 28 : 26,
-                      ),
+                      isSelected ? item.filledIcon : item.outlineIcon,
                       const SizedBox(height: 4),
                       Text(
                         item.label,
@@ -87,9 +80,8 @@ class CustomFloatingNavigationBar extends StatelessWidget {
                               ? const Color(0xff3A3333)
                               : const Color(0xff484C52),
                           fontSize: isSelected ? 12 : 10,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w500,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
                         ),
                       ),
                     ],
@@ -98,7 +90,6 @@ class CustomFloatingNavigationBar extends StatelessWidget {
               );
             }),
           ),
-
           Positioned(
             top: -floatingLift,
             left: 0,

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
 class NavItem {
-  final IconData outlineIcon;
-  final IconData filledIcon;
+  final Widget outlineIcon;
+  final Widget filledIcon;
   final String label;
   final int index;
   final bool showBadge;
