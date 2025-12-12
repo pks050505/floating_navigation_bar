@@ -10,6 +10,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+repository: https://github.com/pks050505/floating_navigation_bar
 
 dev_dependencies:
   flutter_test:
