@@ -1,7 +1,7 @@
 import 'package:custom_floating_navigation_bar/nav_item.dart';
 import 'package:flutter/material.dart';
 
-class FloatingNavigationBar extends StatelessWidget {
+class CustomFloatingNavigationBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
   final List<NavItem> items;
@@ -10,7 +10,7 @@ class FloatingNavigationBar extends StatelessWidget {
   final double floatingSize;
   final double floatingLift;
 
-  FloatingNavigationBar({
+  CustomFloatingNavigationBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
