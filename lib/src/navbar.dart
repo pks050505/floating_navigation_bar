@@ -31,7 +31,7 @@ class CustomFloatingNavigationBar extends StatelessWidget {
   final int? customFloatingSlotIndex;
 
   /// Floating button tap hone par kya kare — null ho to auto-handle hoga
-  final VoidCallback? onFloatingTap;
+  final Function(int)? onFloatingTap;
 
   final double floatingSize;
   final double floatingLift;
@@ -261,7 +261,9 @@ class CustomFloatingNavigationBar extends StatelessWidget {
                 // Center ke bajaye dynamic X position
                 left: floatingCenterX - (floatingSize / 2),
                 child: GestureDetector(
-                  onTap: onFloatingTap ?? () => onTap(floatingItemIndex),
+                  onTap: () => onFloatingTap != null
+                      ? onFloatingTap!(floatingItemIndex)
+                      : onTap(floatingItemIndex),
                   child: SizedBox(
                     width: floatingSize,
                     height: floatingSize,
