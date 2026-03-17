@@ -10,3 +10,6 @@
 ## 1.0.6
 
 - design with custom painter
+## 1.0.8
+
+- example code added
