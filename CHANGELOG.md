@@ -13,3 +13,9 @@
 ## 1.0.8
 
 - example code added
+## 1.0.9
+
+- example code added
+## 1.0.10
+
+- bug fixes
