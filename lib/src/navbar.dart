@@ -1,4 +1,4 @@
-import 'package:custom_floating_navigation_bar/nav_item.dart';
+import 'package:custom_floating_navigation_bar/src/nav_item.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
