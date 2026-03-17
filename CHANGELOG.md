@@ -4,3 +4,6 @@
 
 - bug fixes
 
+## 1.0.5
+
+- improve file structure
