@@ -1,6 +1,6 @@
 name: custom_floating_navigation_bar
 description: A beautiful and highly customizable floating navigation bar for Flutter with smooth animations, badge support, and multiple styles.
-version: 1.0.5
+version: 1.0.6
 homepage: https://github.com/pks050505/floating_navigation_bar
 repository: https://github.com/pks050505/floating_navigation_bar
 

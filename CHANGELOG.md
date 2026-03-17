@@ -7,3 +7,6 @@
 ## 1.0.5
 
 - improve file structure
+## 1.0.6
+
+- design with custom painter

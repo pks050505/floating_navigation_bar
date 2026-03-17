@@ -1,13 +1,37 @@
 import 'package:custom_floating_navigation_bar/src/nav_item.dart';
+import 'package:custom_floating_navigation_bar/src/painters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+/// Floating widget ki position determine karta hai
+enum FloatingPosition {
+  /// Hamesha center mein (default)
+  center,
+
+  /// Left side pe (index 0)
+  left,
+
+  /// Right side pe (last index)
+  right,
+
+  /// Custom slot index pe
+  custom,
+}
 
 class CustomFloatingNavigationBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
   final List<NavItem> items;
   final Widget floatingWidget;
+
+  /// Floating widget ki position — default: center
+  final FloatingPosition floatingPosition;
+
+  /// Sirf tab use hoga jab floatingPosition == FloatingPosition.custom
+  final int? customFloatingSlotIndex;
+
+  /// Floating button tap hone par kya kare — null ho to auto-handle hoga
+  final VoidCallback? onFloatingTap;
 
   final double floatingSize;
   final double floatingLift;
@@ -25,6 +49,9 @@ class CustomFloatingNavigationBar extends StatelessWidget {
     required this.onTap,
     required this.items,
     required this.floatingWidget,
+    this.floatingPosition = FloatingPosition.center,
+    this.customFloatingSlotIndex,
+    this.onFloatingTap,
     this.floatingSize = 132,
     this.floatingLift = 68,
     this.centerGapWidth = 136,
@@ -34,285 +61,537 @@ class CustomFloatingNavigationBar extends StatelessWidget {
     this.bottomRadius = 20,
     this.leftRadius = 24,
     this.rightRadius = 12,
-  }) : assert(items.isNotEmpty, "At least two items required");
+  })  : assert(items.isNotEmpty, "At least one item required"),
+        assert(
+          floatingPosition != FloatingPosition.custom ||
+              customFloatingSlotIndex != null,
+          "customFloatingSlotIndex required when floatingPosition is custom",
+        );
+
+  /// Items length ke basis par slot index calculate karta hai
+  int _resolveFloatingSlotIndex() {
+    final int totalSlots = items.length + 1;
+
+    switch (floatingPosition) {
+      case FloatingPosition.center:
+        return totalSlots ~/ 2; // auto center
+
+      case FloatingPosition.left:
+        return 0; // pehli slot
+
+      case FloatingPosition.right:
+        return totalSlots - 1; // aakhri slot
+
+      case FloatingPosition.custom:
+        // Bounds check — agar out of range ho to center fallback
+        final idx = customFloatingSlotIndex!;
+        if (idx < 0 || idx >= totalSlots) {
+          assert(false,
+              "customFloatingSlotIndex ($idx) out of range (0..${totalSlots - 1}), falling back to center");
+          return totalSlots ~/ 2;
+        }
+        return idx;
+    }
+  }
+
+  /// Floating tap ka actual index — items se map karta hai
+  int _resolveFloatingItemIndex(int slotIndex) {
+    final int totalSlots = items.length + 1;
+    // Slot index ko item index mein convert karo
+    if (slotIndex >= totalSlots - 1) return items.last.index;
+    if (slotIndex <= 0) return items.first.index;
+    // Center slot ke baad wala item
+    return items[slotIndex - 1].index;
+  }
 
   @override
   Widget build(BuildContext context) {
-    int totalSlots = items.length + 1;
-    int middleSlotIndex = totalSlots ~/ 2;
+    final int totalSlots = items.length + 1;
+    final int floatingSlotIndex = _resolveFloatingSlotIndex();
+    final int floatingItemIndex = _resolveFloatingItemIndex(floatingSlotIndex);
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // 1. Shadow Layer (Using CustomPaint to avoid white background issues)
-          Positioned.fill(
-            child: CustomPaint(
-              painter: _NavShadowPainter(
-                topRadius: topRadius.r,
-                bottomRadius: bottomRadius.r,
-                leftRadius: leftRadius.r,
-                rightRadius: rightRadius.r,
-                notchRadius: notchRadius.r,
+    // Floating ki horizontal position calculate karo
+    // LayoutBuilder se actual width milegi
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final double totalWidth = constraints.maxWidth;
+        final double slotWidth = totalWidth / totalSlots;
+
+        // Floating center X position
+        final double floatingCenterX =
+            (floatingSlotIndex * slotWidth) + (slotWidth / 2);
+
+        return Container(
+          margin: EdgeInsets.zero,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // ── 1. Shadow Layer ──────────────────────────────────────
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: NavShadowPainter(
+                    topRadius: topRadius.r,
+                    bottomRadius: bottomRadius.r,
+                    leftRadius: leftRadius.r,
+                    rightRadius: rightRadius.r,
+                    notchRadius: notchRadius.r,
+                    notchCenterX: floatingCenterX,
+                  ),
+                ),
               ),
-            ),
-          ),
-          // 2. Main Nav Bar with ClipPath for perfect transparency
-          ClipPath(
-            clipper: _NotchedNavClipper(
-              topRadius: topRadius,
-              bottomRadius: bottomRadius.r,
-              leftRadius: leftRadius.r,
-              rightRadius: rightRadius.r,
-              notchRadius: notchRadius.r,
-            ),
-            child: Container(
-              height: barHeight.h,
-              color: Colors.white,
-              child: CustomPaint(
-                painter: _NotchedNavBorderPainter(
-                  borderColor: const Color(0xFFF0F0F0),
-                  borderWidth: 1.5,
+
+              // ── 2. Main Nav Bar ──────────────────────────────────────
+              ClipPath(
+                clipper: NotchedNavClipper(
                   topRadius: topRadius,
                   bottomRadius: bottomRadius.r,
                   leftRadius: leftRadius.r,
                   rightRadius: rightRadius.r,
                   notchRadius: notchRadius.r,
+                  notchCenterX: floatingCenterX,
                 ),
-                child: Row(
-                  children: List.generate(totalSlots, (slotIndex) {
-                    if (slotIndex == middleSlotIndex) {
-                      return SizedBox(width: centerGapWidth.w);
-                    }
+                child: Container(
+                  height: barHeight.h,
+                  color: Colors.white,
+                  child: CustomPaint(
+                    painter: NotchedNavBorderPainter(
+                      borderColor: const Color(0xFFF0F0F0),
+                      borderWidth: 1.5,
+                      topRadius: topRadius,
+                      bottomRadius: bottomRadius.r,
+                      leftRadius: leftRadius.r,
+                      rightRadius: rightRadius.r,
+                      notchRadius: notchRadius.r,
+                      notchCenterX: floatingCenterX,
+                    ),
+                    child: Row(
+                      children: List.generate(totalSlots, (slotIndex) {
+                        // Floating slot → gap
+                        if (slotIndex == floatingSlotIndex) {
+                          return SizedBox(width: centerGapWidth.w);
+                        }
 
-                    final itemIndex =
-                        slotIndex < middleSlotIndex ? slotIndex : slotIndex - 1;
-                    final item = items[itemIndex];
-                    final bool isSelected = currentIndex == item.index;
+                        // Item index map karo (slot gap ke liye adjust)
+                        final int itemIndex = slotIndex < floatingSlotIndex
+                            ? slotIndex
+                            : slotIndex - 1;
 
-                    return Expanded(
-                      child: GestureDetector(
-                        onTap: () => onTap(item.index),
-                        // borderRadius: BorderRadius.circular(30),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              height: 26.h,
-                              width: 26.w,
-                              child: isSelected
-                                  ? item.filledIcon
-                                  : item.outlineIcon,
+                        // Bounds guard
+                        if (itemIndex < 0 || itemIndex >= items.length) {
+                          return const SizedBox.shrink();
+                        }
+
+                        final NavItem item = items[itemIndex];
+                        final bool isSelected = currentIndex == item.index;
+
+                        return Expanded(
+                          child: GestureDetector(
+                            onTap: () => onTap(item.index),
+                            behavior: HitTestBehavior.opaque,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                // ── Icon with optional Badge ──
+                                Stack(
+                                  clipBehavior: Clip.none,
+                                  children: [
+                                    SizedBox(
+                                      height: 26.h,
+                                      width: 26.w,
+                                      child: isSelected
+                                          ? item.filledIcon
+                                          : item.outlineIcon,
+                                    ),
+                                    if (item.showBadge)
+                                      Positioned(
+                                        right: -4,
+                                        top: -4,
+                                        child: Container(
+                                          padding: const EdgeInsets.all(2),
+                                          decoration: const BoxDecoration(
+                                            color: Colors.red,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          constraints: const BoxConstraints(
+                                            minWidth: 14,
+                                            minHeight: 14,
+                                          ),
+                                          child: item.badgeText != null
+                                              ? Text(
+                                                  item.badgeText!,
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 8,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                )
+                                              : const SizedBox.shrink(),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                // ── Label ──
+                                Text(
+                                  item.label,
+                                  style: TextStyle(
+                                    color: isSelected
+                                        ? const Color(0xff3A3333)
+                                        : const Color(0xff60646C),
+                                    fontSize: isSelected ? 13 : 12,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              item.label,
-                              style: TextStyle(
-                                color: isSelected
-                                    ? const Color(0xff3A3333)
-                                    : const Color(0xff60646C),
-                                fontSize: isSelected ? 13 : 12,
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
+                          ),
+                        );
+                      }),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          // 3. Floating Widget
-          Positioned(
-            top: -floatingLift.h,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: GestureDetector(
-                onTap: () => onTap(2), // Center action
-                child: SizedBox(
-                  width: floatingSize,
-                  height: floatingSize,
-                  child: floatingWidget,
+
+              // ── 3. Floating Widget ───────────────────────────────────
+              Positioned(
+                top: -floatingLift.h,
+                // Center ke bajaye dynamic X position
+                left: floatingCenterX - (floatingSize / 2),
+                child: GestureDetector(
+                  onTap: onFloatingTap ?? () => onTap(floatingItemIndex),
+                  child: SizedBox(
+                    width: floatingSize,
+                    height: floatingSize,
+                    child: floatingWidget,
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
-Path _buildSmoothNotchedPath(
-  Size size,
-  double topRadius,
-  double bottomRadius,
-  double leftRadius,
-  double rightRadius,
-  double notchRadius,
-) {
-  final double w = size.width;
-  final double h = size.height;
+// import 'package:custom_floating_navigation_bar/src/nav_item.dart';
+// import 'package:flutter/material.dart';
+// import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-  // Keep radii in valid bounds for any device size.
-  final double lx = leftRadius.clamp(0.0, w / 2).toDouble();
-  final double rx = rightRadius.clamp(0.0, w / 2).toDouble();
-  final double ty = topRadius.clamp(0.0, h / 2).toDouble();
-  final double by = bottomRadius.clamp(0.0, h / 2).toDouble();
 
-  // Responsive scaling based on actual nav bar size.
-  final double widthScale = (w / 390.0).clamp(0.8, 1.4).toDouble();
-  final double heightScale = (h / 81.0).clamp(0.75, 1.4).toDouble();
+// class CustomFloatingNavigationBar extends StatelessWidget {
+//   final int currentIndex;
+//   final Function(int) onTap;
+//   final List<NavItem> items;
+//   final Widget floatingWidget;
 
-  // Smooth entry/exit around notch (replaces fixed 10px).
-  final double s = (10.0 * widthScale).clamp(6.0, 16.0).toDouble();
-  final double notchInset = (10.0 * widthScale).clamp(6.0, 18.0).toDouble();
-  final double depthShift =
-      (10.0 * heightScale).clamp(6.0, h * 0.45).toDouble();
+//   final double floatingSize;
+//   final double floatingLift;
+//   final double centerGapWidth;
+//   final double barHeight;
+//   final double notchRadius;
+//   final double topRadius;
+//   final double bottomRadius;
+//   final double leftRadius;
+//   final double rightRadius;
 
-  final double maxNotch =
-      (((w - lx - rx) / 2) - s - 2.0).clamp(0.0, w / 2).toDouble();
-  final double nr =
-      (notchRadius.r - notchInset).clamp(0.0, maxNotch).toDouble();
-  final double cx = w / 2;
+//   CustomFloatingNavigationBar({
+//     super.key,
+//     required this.currentIndex,
+//     required this.onTap,
+//     required this.items,
+//     required this.floatingWidget,
+//     this.floatingSize = 132,
+//     this.floatingLift = 68,
+//     this.centerGapWidth = 136,
+//     this.barHeight = 81,
+//     this.notchRadius = 48,
+//     this.topRadius = 14,
+//     this.bottomRadius = 20,
+//     this.leftRadius = 24,
+//     this.rightRadius = 12,
+//   }) : assert(items.isNotEmpty, "At least two items required");
 
-  final path = Path()
-    // 1. Start after top-left corner
-    ..moveTo(lx, 0)
-    // 2. Line to notch start
-    ..lineTo(cx - nr - s, 0)
-    // 3. Bezier curve into the notch
-    ..quadraticBezierTo(cx - nr, 0, cx - nr, depthShift)
-    // 4. The Notch Arc
-    ..arcToPoint(
-      Offset(cx + nr, depthShift),
-      radius: Radius.circular(nr),
-      clockwise: false,
-    )
-    // 5. Bezier curve out of the notch
-    ..quadraticBezierTo(cx + nr, 0, cx + nr + s, 0)
-    // 6. Top-Right Corner
-    ..lineTo(w - rx, 0)
-    ..quadraticBezierTo(w, 0, w, ty)
-    // 7. Bottom-Right Corner
-    ..lineTo(w, h - by)
-    ..quadraticBezierTo(w, h, w - rx, h)
-    // 8. Bottom-Left Corner
-    ..lineTo(lx, h)
-    ..quadraticBezierTo(0, h, 0, h - by)
-    // 9. Back to Top-Left
-    ..lineTo(0, ty)
-    ..quadraticBezierTo(0, 0, lx, 0)
-    ..close();
+//   @override
+//   Widget build(BuildContext context) {
+//     int totalSlots = items.length + 1;
+//     int middleSlotIndex = totalSlots ~/ 2;
 
-  return path;
-}
+//     return Container(
+//       margin: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+//       child: Stack(
+//         clipBehavior: Clip.none,
+//         children: [
+//           // 1. Shadow Layer (Using CustomPaint to avoid white background issues)
+//           Positioned.fill(
+//             child: CustomPaint(
+//               painter: _NavShadowPainter(
+//                 topRadius: topRadius.r,
+//                 bottomRadius: bottomRadius.r,
+//                 leftRadius: leftRadius.r,
+//                 rightRadius: rightRadius.r,
+//                 notchRadius: notchRadius.r,
+//               ),
+//             ),
+//           ),
+//           // 2. Main Nav Bar with ClipPath for perfect transparency
+//           ClipPath(
+//             clipper: _NotchedNavClipper(
+//               topRadius: topRadius,
+//               bottomRadius: bottomRadius.r,
+//               leftRadius: leftRadius.r,
+//               rightRadius: rightRadius.r,
+//               notchRadius: notchRadius.r,
+//             ),
+//             child: Container(
+//               height: barHeight.h,
+//               color: Colors.white,
+//               child: CustomPaint(
+//                 painter: _NotchedNavBorderPainter(
+//                   borderColor: const Color(0xFFF0F0F0),
+//                   borderWidth: 1.5,
+//                   topRadius: topRadius,
+//                   bottomRadius: bottomRadius.r,
+//                   leftRadius: leftRadius.r,
+//                   rightRadius: rightRadius.r,
+//                   notchRadius: notchRadius.r,
+//                 ),
+//                 child: Row(
+//                   children: List.generate(totalSlots, (slotIndex) {
+//                     if (slotIndex == middleSlotIndex) {
+//                       return SizedBox(width: centerGapWidth.w);
+//                     }
 
-class _NotchedNavClipper extends CustomClipper<Path> {
-  final double topRadius;
-  final double bottomRadius;
-  final double leftRadius;
-  final double rightRadius;
-  final double notchRadius;
-  _NotchedNavClipper({
-    required this.topRadius,
-    required this.bottomRadius,
-    required this.leftRadius,
-    required this.rightRadius,
-    required this.notchRadius,
-  });
+//                     final itemIndex =
+//                         slotIndex < middleSlotIndex ? slotIndex : slotIndex - 1;
+//                     final item = items[itemIndex];
+//                     final bool isSelected = currentIndex == item.index;
 
-  @override
-  Path getClip(Size size) => _buildSmoothNotchedPath(
-        size,
-        topRadius,
-        bottomRadius,
-        leftRadius,
-        rightRadius,
-        notchRadius,
-      );
+//                     return Expanded(
+//                       child: GestureDetector(
+//                         onTap: () => onTap(item.index),
+//                         // borderRadius: BorderRadius.circular(30),
+//                         child: Column(
+//                           mainAxisAlignment: MainAxisAlignment.center,
+//                           children: [
+//                             SizedBox(
+//                               height: 26.h,
+//                               width: 26.w,
+//                               child: isSelected
+//                                   ? item.filledIcon
+//                                   : item.outlineIcon,
+//                             ),
+//                             const SizedBox(height: 6),
+//                             Text(
+//                               item.label,
+//                               style: TextStyle(
+//                                 color: isSelected
+//                                     ? const Color(0xff3A3333)
+//                                     : const Color(0xff60646C),
+//                                 fontSize: isSelected ? 13 : 12,
+//                                 fontWeight: isSelected
+//                                     ? FontWeight.w600
+//                                     : FontWeight.w500,
+//                               ),
+//                             ),
+//                           ],
+//                         ),
+//                       ),
+//                     );
+//                   }),
+//                 ),
+//               ),
+//             ),
+//           ),
+//           // 3. Floating Widget
+//           Positioned(
+//             top: -floatingLift.h,
+//             left: 0,
+//             right: 0,
+//             child: Center(
+//               child: GestureDetector(
+//                 onTap: () => onTap(2), // Center action
+//                 child: SizedBox(
+//                   width: floatingSize,
+//                   height: floatingSize,
+//                   child: floatingWidget,
+//                 ),
+//               ),
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
 
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
-}
+// Path _buildSmoothNotchedPath(
+//   Size size,
+//   double topRadius,
+//   double bottomRadius,
+//   double leftRadius,
+//   double rightRadius,
+//   double notchRadius,
+// ) {
+//   final double w = size.width;
+//   final double h = size.height;
 
-class _NotchedNavBorderPainter extends CustomPainter {
-  final Color borderColor;
-  final double borderWidth;
-  final double topRadius;
-  final double bottomRadius;
-  final double leftRadius;
-  final double rightRadius;
-  final double notchRadius;
+//   // Keep radii in valid bounds for any device size.
+//   final double lx = leftRadius.clamp(0.0, w / 2).toDouble();
+//   final double rx = rightRadius.clamp(0.0, w / 2).toDouble();
+//   final double ty = topRadius.clamp(0.0, h / 2).toDouble();
+//   final double by = bottomRadius.clamp(0.0, h / 2).toDouble();
 
-  _NotchedNavBorderPainter({
-    required this.borderColor,
-    required this.borderWidth,
-    required this.topRadius,
-    required this.bottomRadius,
-    required this.leftRadius,
-    required this.rightRadius,
-    required this.notchRadius,
-  });
+//   // Responsive scaling based on actual nav bar size.
+//   final double widthScale = (w / 390.0).clamp(0.8, 1.4).toDouble();
+//   final double heightScale = (h / 81.0).clamp(0.75, 1.4).toDouble();
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = borderColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = borderWidth;
-    canvas.drawPath(
-      _buildSmoothNotchedPath(
-        size,
-        topRadius,
-        bottomRadius,
-        leftRadius,
-        rightRadius,
-        notchRadius,
-      ),
-      paint,
-    );
-  }
+//   // Smooth entry/exit around notch (replaces fixed 10px).
+//   final double s = (10.0 * widthScale).clamp(6.0, 16.0).toDouble();
+//   final double notchInset = (10.0 * widthScale).clamp(6.0, 18.0).toDouble();
+//   final double depthShift =
+//       (10.0 * heightScale).clamp(6.0, h * 0.45).toDouble();
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
-}
+//   final double maxNotch =
+//       (((w - lx - rx) / 2) - s - 2.0).clamp(0.0, w / 2).toDouble();
+//   final double nr =
+//       (notchRadius.r - notchInset).clamp(0.0, maxNotch).toDouble();
+//   final double cx = w / 2;
 
-class _NavShadowPainter extends CustomPainter {
-  final double topRadius;
-  final double bottomRadius;
-  final double leftRadius;
-  final double rightRadius;
-  final double notchRadius;
-  _NavShadowPainter({
-    required this.topRadius,
-    required this.bottomRadius,
-    required this.leftRadius,
-    required this.rightRadius,
-    required this.notchRadius,
-  });
+//   final path = Path()
+//     // 1. Start after top-left corner
+//     ..moveTo(lx, 0)
+//     // 2. Line to notch start
+//     ..lineTo(cx - nr - s, 0)
+//     // 3. Bezier curve into the notch
+//     ..quadraticBezierTo(cx - nr, 0, cx - nr, depthShift)
+//     // 4. The Notch Arc
+//     ..arcToPoint(
+//       Offset(cx + nr, depthShift),
+//       radius: Radius.circular(nr),
+//       clockwise: false,
+//     )
+//     // 5. Bezier curve out of the notch
+//     ..quadraticBezierTo(cx + nr, 0, cx + nr + s, 0)
+//     // 6. Top-Right Corner
+//     ..lineTo(w - rx, 0)
+//     ..quadraticBezierTo(w, 0, w, ty)
+//     // 7. Bottom-Right Corner
+//     ..lineTo(w, h - by)
+//     ..quadraticBezierTo(w, h, w - rx, h)
+//     // 8. Bottom-Left Corner
+//     ..lineTo(lx, h)
+//     ..quadraticBezierTo(0, h, 0, h - by)
+//     // 9. Back to Top-Left
+//     ..lineTo(0, ty)
+//     ..quadraticBezierTo(0, 0, lx, 0)
+//     ..close();
 
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = _buildSmoothNotchedPath(
-      size,
-      topRadius,
-      bottomRadius,
-      leftRadius,
-      rightRadius,
-      notchRadius,
-    );
-    canvas.drawShadow(path, Colors.black.withValues(alpha: 0.18), 12.0, false);
-  }
+//   return path;
+// }
 
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
+// class _NotchedNavClipper extends CustomClipper<Path> {
+//   final double topRadius;
+//   final double bottomRadius;
+//   final double leftRadius;
+//   final double rightRadius;
+//   final double notchRadius;
+//   _NotchedNavClipper({
+//     required this.topRadius,
+//     required this.bottomRadius,
+//     required this.leftRadius,
+//     required this.rightRadius,
+//     required this.notchRadius,
+//   });
+
+//   @override
+//   Path getClip(Size size) => _buildSmoothNotchedPath(
+//         size,
+//         topRadius,
+//         bottomRadius,
+//         leftRadius,
+//         rightRadius,
+//         notchRadius,
+//       );
+
+//   @override
+//   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
+// }
+
+// class _NotchedNavBorderPainter extends CustomPainter {
+//   final Color borderColor;
+//   final double borderWidth;
+//   final double topRadius;
+//   final double bottomRadius;
+//   final double leftRadius;
+//   final double rightRadius;
+//   final double notchRadius;
+
+//   _NotchedNavBorderPainter({
+//     required this.borderColor,
+//     required this.borderWidth,
+//     required this.topRadius,
+//     required this.bottomRadius,
+//     required this.leftRadius,
+//     required this.rightRadius,
+//     required this.notchRadius,
+//   });
+
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final paint = Paint()
+//       ..color = borderColor
+//       ..style = PaintingStyle.stroke
+//       ..strokeWidth = borderWidth;
+//     canvas.drawPath(
+//       _buildSmoothNotchedPath(
+//         size,
+//         topRadius,
+//         bottomRadius,
+//         leftRadius,
+//         rightRadius,
+//         notchRadius,
+//       ),
+//       paint,
+//     );
+//   }
+
+//   @override
+//   bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+// }
+
+// class _NavShadowPainter extends CustomPainter {
+//   final double topRadius;
+//   final double bottomRadius;
+//   final double leftRadius;
+//   final double rightRadius;
+//   final double notchRadius;
+//   _NavShadowPainter({
+//     required this.topRadius,
+//     required this.bottomRadius,
+//     required this.leftRadius,
+//     required this.rightRadius,
+//     required this.notchRadius,
+//   });
+
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final path = _buildSmoothNotchedPath(
+//       size,
+//       topRadius,
+//       bottomRadius,
+//       leftRadius,
+//       rightRadius,
+//       notchRadius,
+//     );
+//     canvas.drawShadow(path, Colors.black.withValues(alpha: 0.18), 12.0, false);
+//   }
+
+//   @override
+//   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+// }
 
 
