@@ -1,6 +1,3 @@
-// ─────────────────────────────────────────────────────────────
-// Path Builder — notchCenterX dynamic hai ab
-// ─────────────────────────────────────────────────────────────
 
 
 import 'package:flutter/material.dart';
@@ -34,7 +31,6 @@ Path _buildSmoothNotchedPath(
       (((w - lx - rx) / 2) - s - 2.0).clamp(0.0, w / 2).toDouble();
   final double nr = (notchRadius - notchInset).clamp(0.0, maxNotch).toDouble();
 
-  // ✅ cx ab dynamic hai — center nahi, floatingCenterX hai
   final double cx = notchCenterX;
 
   return Path()
