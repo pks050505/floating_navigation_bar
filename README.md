@@ -12,7 +12,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  custom_floating_navigation_bar: ^1.1.4
+  custom_floating_navigation_bar: ^1.1.5
 ```
 
 Then run:

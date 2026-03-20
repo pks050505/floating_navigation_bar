@@ -41,3 +41,6 @@
 ## 1.1.4
 
 - remove unused package
+## 1.1.5
+
+- preview images
