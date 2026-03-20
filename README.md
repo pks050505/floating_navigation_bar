@@ -12,7 +12,7 @@ A beautiful floating navigation bar with customizable notch position for Flutter
 Add this to your `pubspec.yaml`:
 ```yaml
 dependencies:
-  custom_floating_navigation_bar: ^1.1.2
+  custom_floating_navigation_bar: ^1.1.3
 ```
 
 Then run:

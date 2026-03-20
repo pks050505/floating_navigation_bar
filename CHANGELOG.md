@@ -35,3 +35,6 @@
 ## 1.1.1
 
 - bug fixes
+## 1.1.3
+
+- bug fixes

@@ -5,13 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 enum FloatingPosition {
-
   center,
-
   left,
-
   right,
-
   custom,
 }
 
@@ -58,7 +54,7 @@ class CustomFloatingNavigationBar extends StatelessWidget {
     this.rightRadius = 12,
     this.enableHaptic = true, 
 
-  })  : assert(items.isNotEmpty, "At least one item required"),
+  })  : assert(items.isNotEmpty, "At least three item required"),
         assert(
           floatingPosition != FloatingPosition.custom ||
               customFloatingSlotIndex != null,
@@ -109,7 +105,6 @@ class CustomFloatingNavigationBar extends StatelessWidget {
         final double totalWidth = constraints.maxWidth;
         final double slotWidth = totalWidth / totalSlots;
 
-        // Floating center X position
         final double floatingCenterX =
             (floatingSlotIndex * slotWidth) + (slotWidth / 2);
 
