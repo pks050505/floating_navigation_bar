@@ -23,3 +23,7 @@
 ## 1.1.0
 
 - bug fixes
+
+## 1.1.1
+
+- preview image added
