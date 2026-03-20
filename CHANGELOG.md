@@ -44,3 +44,6 @@
 ## 1.1.5
 
 - preview images
+## 1.1.6
+
+-bug fixes
