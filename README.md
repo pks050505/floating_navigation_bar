@@ -4,23 +4,25 @@ A beautiful floating navigation bar with customizable notch position for Flutter
 
 ## Preview
 
-
-![Preview](https://raw.githubusercontent.com/pks050505/floating_navigation_bar/main/preview.gif)
+![Preview](https://raw.githubusercontent.com/pks050505/floating_navigation_bar/main/assets/botton_navigation.png)
 
 ## Installation
 
 Add this to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
   custom_floating_navigation_bar: ^1.1.4
 ```
 
 Then run:
+
 ```bash
 flutter pub get
 ```
 
 ## Basic Usage
+
 ```dart
 import 'package:custom_floating_navigation_bar/custom_floating_navigation_bar.dart';
 
@@ -64,6 +66,7 @@ Scaffold(
 ## Floating Position Options
 
 ### Center (Default)
+
 ```dart
 CustomFloatingNavigationBar(
   floatingPosition: FloatingPosition.center, // default
@@ -73,6 +76,7 @@ CustomFloatingNavigationBar(
 ```
 
 ### Left
+
 ```dart
 CustomFloatingNavigationBar(
   floatingPosition: FloatingPosition.left,
@@ -82,6 +86,7 @@ CustomFloatingNavigationBar(
 ```
 
 ### Right
+
 ```dart
 CustomFloatingNavigationBar(
   floatingPosition: FloatingPosition.right,
@@ -91,16 +96,18 @@ CustomFloatingNavigationBar(
 ```
 
 ### Custom Slot
+
 ```dart
 CustomFloatingNavigationBar(
   floatingPosition: FloatingPosition.custom,
-  customFloatingSlotIndex: 1, 
+  customFloatingSlotIndex: 1,
   onFloatingTap: (_) => _onTap(1),
   // ...
 )
 ```
 
 ## Badge Support
+
 ```dart
 NavItem(
   index: 1,
@@ -116,39 +123,42 @@ NavItem(
 
 ### CustomFloatingNavigationBar
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `currentIndex` | `int` | required | Active tab index |
-| `onTap` | `Function(int)` | required | Tab tap callback |
-| `items` | `List<NavItem>` | required | Nav items |
-| `floatingWidget` | `Widget` | required | Center floating widget |
-| `floatingPosition` | `FloatingPosition` | `center` | Notch position |
-| `customFloatingSlotIndex` | `int?` | `null` | Custom slot (FloatingPosition.custom mein) |
-| `onFloatingTap` | `Function(int)?` | `null` | Floating tap callback |
-| `floatingSize` | `double` | `64` | Floating button size |
-| `floatingLift` | `double` | `30` | Floating button upar kitna uthega |
-| `centerGapWidth` | `double` | `80` | Notch gap width |
-| `barHeight` | `double` | `64` | Nav bar height |
-| `notchRadius` | `double` | `40` | Notch curve radius |
-| `topRadius` | `double` | `14` | Top corners radius |
-| `bottomRadius` | `double` | `20` | Bottom corners radius |
-| `leftRadius` | `double` | `24` | Left corner radius |
-| `rightRadius` | `double` | `12` | Right corner radius |
+| Parameter                 | Type               | Default  | Description                                |
+| ------------------------- | ------------------ | -------- | ------------------------------------------ |
+| `currentIndex`            | `int`              | required | Active tab index                           |
+| `onTap`                   | `Function(int)`    | required | Tab tap callback                           |
+| `items`                   | `List<NavItem>`    | required | Nav items                                  |
+| `floatingWidget`          | `Widget`           | required | Center floating widget                     |
+| `floatingPosition`        | `FloatingPosition` | `center` | Notch position                             |
+| `customFloatingSlotIndex` | `int?`             | `null`   | Custom slot (FloatingPosition.custom mein) |
+| `onFloatingTap`           | `Function(int)?`   | `null`   | Floating tap callback                      |
+| `floatingSize`            | `double`           | `64`     | Floating button size                       |
+| `floatingLift`            | `double`           | `30`     | Floating button upar kitna uthega          |
+| `centerGapWidth`          | `double`           | `80`     | Notch gap width                            |
+| `barHeight`               | `double`           | `64`     | Nav bar height                             |
+| `notchRadius`             | `double`           | `40`     | Notch curve radius                         |
+| `topRadius`               | `double`           | `14`     | Top corners radius                         |
+| `bottomRadius`            | `double`           | `20`     | Bottom corners radius                      |
+| `leftRadius`              | `double`           | `24`     | Left corner radius                         |
+| `rightRadius`             | `double`           | `12`     | Right corner radius                        |
 
 ### NavItem
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `index` | `int` | required | Tab index |
-| `label` | `String` | required | Tab label |
-| `outlineIcon` | `Widget` | required | Unselected icon |
-| `filledIcon` | `Widget` | required | Selected icon |
-| `showBadge` | `bool` | `false` | Badge show/hide |
-| `badgeText` | `String?` | `null` | Badge text (null = dot) |
+| Parameter     | Type      | Default  | Description             |
+| ------------- | --------- | -------- | ----------------------- |
+| `index`       | `int`     | required | Tab index               |
+| `label`       | `String`  | required | Tab label               |
+| `outlineIcon` | `Widget`  | required | Unselected icon         |
+| `filledIcon`  | `Widget`  | required | Selected icon           |
+| `showBadge`   | `bool`    | `false`  | Badge show/hide         |
+| `badgeText`   | `String?` | `null`   | Badge text (null = dot) |
 
 ## License
+
 MIT
+
 ```
 
 ---
 
+```
