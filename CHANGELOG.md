@@ -38,3 +38,6 @@
 ## 1.1.3
 
 - bug fixes
+## 1.1.4
+
+- remove unused package
